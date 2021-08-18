@@ -1,0 +1,10 @@
+# Build
+server
+.lsp
+.cpcache
+temp
+
+# Editor
+.calva
+.vscode
+.nrepl*
