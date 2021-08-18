@@ -2,9 +2,12 @@
 server
 .lsp
 .cpcache
-temp
 
 # Editor
 .calva
 .vscode
 .nrepl*
+
+# Misc
+.DS_Store
+temp
