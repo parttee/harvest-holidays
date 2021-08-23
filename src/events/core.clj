@@ -1,36 +1,48 @@
 (ns events.core
   (:require [clj-http.client :as client])
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str])
+  (:require [events.event :refer [newEvent eventDateValue]]))
 
 (def calUrl "http://localhost:8000/finland.ics")
 ;; (def calUrl "https://www.officeholidays.com/ics/finland")
 
-(defstruct .Holiday :day :holiday :date)
-
-(defn loadEventContent
-  "Loads the event table from the website"
+(defn loadCalendarEvents
+  "Loads calendar data from the server"
   []
   (:body (client/get calUrl {:insecure? true})))
 
-(defn parseEventRow [row year]
-  (let [rowData (into {} (->> (clojure.string/split-lines row)
-                              (map #(let [[key val] (str/split % #":")]
-                                      {(str/lower-case key) val}))))
-        date (get rowData "dtstamp")]
-    (if (and (not-empty date) (= year (subs date 0 4))) rowData nil)))
+(defn createKey
+  "Creates event data key"
+  [key]
+  (-> key
+      (str/lower-case)
+      (str/split #";" 2)
+      (first)))
 
-(defn parseEvents
-  "Parse ics to more usable format"
+(defn createValue
+  "Creates event data value" [val] (str/replace val #"Finland: " ""))
+
+(defn createEventRow
+  "Creates event data from event string stump"
+  [row year]
+  (let [rowData (into {} (->> (clojure.string/split-lines row)
+                              (map #(let [[key val] (str/split % #":" 2)]
+                                      {(createKey key) (createValue val)}))))
+        date (eventDateValue rowData)]
+    (if (and (not-empty date) (= year (subs date 0 4))) (newEvent rowData) nil)))
+
+(defn parseEventsResponse
+  "Parses ics to more usable format"
   [ics year]
   (let [rowString (->> (str/split ics #"\s*BEGIN:VEVENT\s*")
                        (map #(str/replace %1 #"END:VEVENT\s*" "")))]
-    (filter not-empty (map #(parseEventRow % year) rowString))))
+    (filter not-empty (map #(createEventRow % year) rowString))))
 
 (defn getEvents
   "Gets holiday events for given year"
   [year]
   (let [y (str year)]
-    (-> (loadEventContent)
-        (parseEvents y))))
+    (-> (loadCalendarEvents)
+        (parseEventsResponse y))))
 
 (println (getEvents 2021))
