@@ -7,6 +7,7 @@ server
 .calva
 .vscode
 .nrepl*
+.cache
 
 # Misc
 .DS_Store

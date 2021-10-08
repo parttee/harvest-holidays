@@ -1,7 +1,10 @@
 (ns events.core
   (:require [clj-http.client :as client])
   (:require [clojure.string :as str])
-  (:require [events.event :refer [newEvent eventDateValue]]))
+  (:require [events.event :refer [newEvent eventDateValue]])
+  (:require [ring.middleware.params :as p])
+  (:require [ring.util.response :as r])
+  (:require [ring.adapter.jetty :as j]))
 
 (def calUrl "http://localhost:8000/finland.ics")
 ;; (def calUrl "https://www.officeholidays.com/ics/finland")
@@ -38,11 +41,23 @@
                        (map #(str/replace %1 #"END:VEVENT\s*" "")))]
     (filter not-empty (map #(createEventRow % year) rowString))))
 
+(defn filterEvents
+  "Filters out events that are not usable for our purposes (weekends, maybe some other)"
+  [events]
+  (remove #(or (= (get % :day) "Sat") (= (get % :day) "Sun")) events))
+
 (defn getEvents
   "Gets holiday events for given year"
   [year]
   (let [y (str year)]
-    (-> (loadCalendarEvents)
-        (parseEventsResponse y))))
+    (filterEvents (-> (loadCalendarEvents)
+                      (parseEventsResponse y)))))
 
-(println (getEvents 2021))
+(defn handler [{{year "year"} :params}]
+  (-> (r/response (getEvents year))
+      (r/content-type "application/json")))
+
+(def app
+  (-> handler p/wrap-params))
+
+(j/run-jetty app {:port 8080})
