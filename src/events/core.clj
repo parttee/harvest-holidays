@@ -1,10 +1,12 @@
 (ns events.core
+  (:gen-class)
   (:require [clj-http.client :as client])
   (:require [clojure.string :as str])
   (:require [events.event :refer [newEvent eventDateValue]])
-  (:require [ring.middleware.params :as p])
-  (:require [ring.util.response :as r])
-  (:require [ring.adapter.jetty :as j]))
+  (:require [ring.middleware.params :refer [wrap-params]])
+  (:require [ring.util.response :refer [response content-type]])
+  (:require [ring.adapter.jetty :refer [run-jetty]])
+  (:require [ring.middleware.json :refer [wrap-json-response]]))
 
 (def calUrl "http://localhost:8000/finland.ics")
 ;; (def calUrl "https://www.officeholidays.com/ics/finland")
@@ -54,10 +56,14 @@
                       (parseEventsResponse y)))))
 
 (defn handler [{{year "year"} :params}]
-  (-> (r/response (getEvents year))
-      (r/content-type "application/json")))
+  (-> (response (getEvents year))
+      (content-type "json")))
 
 (def app
-  (-> handler p/wrap-params))
+  (->
+   handler
+   wrap-params
+   wrap-json-response))
 
-(j/run-jetty app {:port 8080})
+(defn -main []
+  (run-jetty app {:port 3000}))
