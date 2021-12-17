@@ -1,5 +1,6 @@
 # Build
 server
+target
 .lsp
 .cpcache
 
@@ -12,3 +13,5 @@ server
 # Misc
 .DS_Store
 temp
+.lein-env
+*.log

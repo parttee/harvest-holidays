@@ -6,15 +6,11 @@
   (:require [ring.middleware.params :refer [wrap-params]])
   (:require [ring.util.response :refer [response content-type]])
   (:require [ring.adapter.jetty :refer [run-jetty]])
-  (:require [ring.middleware.json :refer [wrap-json-response]]))
+  (:require [ring.middleware.json :refer [wrap-json-response]])
+  (:require [redis.core :refer [getValue setValue]]))
 
-(def calUrl "http://localhost:8000/finland.ics")
-;; (def calUrl "https://www.officeholidays.com/ics/finland")
-
-(defn loadCalendarEvents
-  "Loads calendar data from the server"
-  []
-  (:body (client/get calUrl {:insecure? true})))
+;; (def calUrl "http://localhost:8000/finland.ics")
+(def calUrl "https://www.officeholidays.com/ics/finland")
 
 (defn createKey
   "Creates event data key"
@@ -42,6 +38,14 @@
   (let [rowString (->> (str/split ics #"\s*BEGIN:VEVENT\s*")
                        (map #(str/replace %1 #"END:VEVENT\s*" "")))]
     (filter not-empty (map #(createEventRow % year) rowString))))
+
+(defn loadCalendarEvents
+  "Loads calendar data from the server"
+  []
+  (let [cache (getValue "ics-response")]
+    (if cache cache (let [res (:body (client/get calUrl {:insecure? true}))]
+                      (setValue "ics-response" res)
+                      res))))
 
 (defn filterEvents
   "Filters out events that are not usable for our purposes (weekends, maybe some other)"

@@ -1,5 +1,7 @@
 FROM clojure
 EXPOSE 3000
+RUN apt-get update && apt-get install -y iputils-ping bash
+SHELL ["/bin/bash", "-c"]
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 COPY project.clj /usr/src/app/
