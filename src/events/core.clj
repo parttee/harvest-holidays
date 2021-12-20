@@ -30,7 +30,7 @@
                               (map #(let [[key val] (str/split % #":" 2)]
                                       {(createKey key) (createValue val)}))))
         date (eventDateValue rowData)]
-    (if (and (not-empty date) (= year (subs date 0 4))) (newEvent rowData) nil)))
+    (if (and (not-empty date) (or (empty? year) (= year (subs date 0 4)))) (newEvent rowData) nil)))
 
 (defn parseEventsResponse
   "Parses ics to more usable format"
@@ -60,7 +60,7 @@
                       (parseEventsResponse y)))))
 
 (defn handler [{{year "year"} :params}]
-  (-> (response (getEvents year))
+  (-> (response (getEvents (or year "")))
       (content-type "json")))
 
 (def app
@@ -71,3 +71,5 @@
 
 (defn -main []
   (run-jetty app {:port 3000}))
+
+(-main)
