@@ -71,5 +71,3 @@
 
 (defn -main []
   (run-jetty app {:port 3000}))
-
-(-main)
