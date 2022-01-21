@@ -21,3 +21,9 @@ You can run the image e.g. by calling `docker run -d -P --name holidays-api harv
 If you have redis in another container, you should add this container and the redis container in the same network `docker run -d -P --name holidays-api --network yournetwork harvest-holidays`
 
 When the redis server is in another container, the `redis-host` should be that container's name. Note that you do not have to expose the redis port when using redis in docker container. If the containers shares the same network, it should work.
+
+## Supported search parameters
+
+country `"fi" | "se"` (optional, empty means show all)
+
+year `number` (optional, empty means show all)

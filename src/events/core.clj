@@ -10,7 +10,12 @@
   (:require [redis.core :refer [getValue setValue]]))
 
 ;; (def calUrl "http://localhost:8000/finland.ics")
-(def calUrl "https://www.officeholidays.com/ics/finland")
+(defn getCalUrl
+  "Returns propert ical api url for given country code."
+  [country]
+  (if (= "fi" country)
+    "https://www.officeholidays.com/ics/finland"
+    "https://www.officeholidays.com/ics/sweden"))
 
 (defn createKey
   "Creates event data key"
@@ -21,7 +26,7 @@
       (first)))
 
 (defn createValue
-  "Creates event data value" [val] (str/replace val #"Finland: " ""))
+  "Creates event data value" [val] (str/replace val #"(Finland|Sweden): " ""))
 
 (defn createEventRow
   "Creates event data from event string stump"
@@ -41,10 +46,10 @@
 
 (defn loadCalendarEvents
   "Loads calendar data from the server"
-  []
-  (let [cache (getValue "ics-response")]
-    (if cache cache (let [res (:body (client/get calUrl {:insecure? true}))]
-                      (setValue "ics-response" res)
+  [country]
+  (let [cacheKey (str "ics-response-" country), cache (getValue cacheKey)]
+    (if cache cache (let [res (:body (client/get (getCalUrl country) {:insecure? true}))]
+                      (setValue cacheKey res)
                       res))))
 
 (defn filterEvents
@@ -53,15 +58,30 @@
   (remove #(or (= (get % :day) "Sat") (= (get % :day) "Sun")) events))
 
 (defn getEvents
-  "Gets holiday events for given year"
-  [year]
+  "Gets holiday events for given year and country"
+  [year country]
   (let [y (str year)]
-    (filterEvents (-> (loadCalendarEvents)
+    (filterEvents (-> (loadCalendarEvents country)
                       (parseEventsResponse y)))))
 
-(defn handler [{{year "year"} :params}]
-  (-> (response (getEvents (or year "")))
-      (content-type "json")))
+
+(defn mergeEventLists
+  "Merges two list of events into one event"
+  [list1 list2]
+  (->> (concat list1 list2)
+       (sort-by :date)
+       (partition-by :date)
+       (map (partial
+             apply
+             merge-with (fn [x y] (if (= x y) x (list x y)))))))
+
+(defn handler [{{year "year" country "country"} :params}]
+  (let [yearVal (or year "")]
+    (-> (if (empty? country)
+          (mergeEventLists (getEvents yearVal "fi") (getEvents yearVal "se"))
+          (getEvents yearVal country))
+        response
+        (content-type "json"))))
 
 (def app
   (->
@@ -72,4 +92,4 @@
 (defn -main []
   (run-jetty app {:port 3000}))
 
-(-main)
+;; (-main)

@@ -1,6 +1,6 @@
 (ns events.event)
 
-(defstruct .Holiday :day :holiday :date)
+(defstruct .Holiday :day :holiday :date :country)
 
 (defn eventDateValue
   "Returns event date value from given data"
@@ -23,4 +23,5 @@
     (struct .Holiday
             (.format sdfDay fromDate)
             (eventNameValue event)
-            (.format sdfDate fromDate))))
+            (.format sdfDate fromDate)
+            (get event "location"))))
