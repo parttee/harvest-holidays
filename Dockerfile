@@ -1,5 +1,5 @@
 FROM clojure
-EXPOSE 3000
+EXPOSE 3388
 RUN apt-get update && apt-get install -y iputils-ping bash
 SHELL ["/bin/bash", "-c"]
 RUN mkdir -p /usr/src/app

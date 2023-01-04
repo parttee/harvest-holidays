@@ -7,6 +7,11 @@
                  [ring/ring-jetty-adapter "1.9.4"]
                  [com.taoensso/carmine "3.1.0"]
                  [environ "1.2.0"]]
+  :plugins [[lein-environ "1.2.0"]]
   :main events.core
-  ;; :target-path "server/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar [:prod {:aot :all}]
+             :dev [:project/dev :profiles/dev]
+             :prod [:project/prod :profiles/prod]
+           ;; only edit :profiles/* in profiles.clj
+             :project/dev  {}
+             :project/prod  {}})

@@ -88,6 +88,6 @@
    wrap-json-response))
 
 (defn -main []
-  (run-jetty app {:port 3388}))
+  (run-jetty app {:port (or (env :port) 3388)}))
 
 (when (= "dev" (env :environment)) (-main))
