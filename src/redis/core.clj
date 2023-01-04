@@ -9,7 +9,8 @@
 (defmacro wcar* [& body] `(wcar server1-conn ~@body))
 
 (defn setValue [key value]
-  (wcar* (car/set key value)))
+  (wcar* (car/set key value))
+  (wcar* (car/expire key (* 60 60 24 60))))
 
 
 (defn getValue [key]
