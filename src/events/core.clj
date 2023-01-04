@@ -7,15 +7,16 @@
   (:require [ring.util.response :refer [response content-type]])
   (:require [ring.adapter.jetty :refer [run-jetty]])
   (:require [ring.middleware.json :refer [wrap-json-response]])
-  (:require [redis.core :refer [getValue setValue]]))
+  (:require [redis.core :refer [getValue setValue]])
+  (:require [environ.core :refer [env]]))
 
 ;; (def calUrl "http://localhost:8000/finland.ics")
 (defn getCalUrl
   "Returns propert ical api url for given country code."
   [country]
   (if (= "fi" country)
-    "https://www.officeholidays.com/ics/finland"
-    "https://www.officeholidays.com/ics/sweden"))
+    "https://www.officeholidays.com/ics-clean/finland"
+    "https://www.officeholidays.com/ics-clean/sweden"))
 
 (defn createKey
   "Creates event data key"
@@ -25,15 +26,12 @@
       (str/split #";" 2)
       (first)))
 
-(defn createValue
-  "Creates event data value" [val] (str/replace val #"(Finland|Sweden): " ""))
-
 (defn createEventRow
   "Creates event data from event string stump"
   [row year]
   (let [rowData (into {} (->> (clojure.string/split-lines row)
                               (map #(let [[key val] (str/split % #":" 2)]
-                                      {(createKey key) (createValue val)}))))
+                                      {(createKey key) val}))))
         date (eventDateValue rowData)]
     (if (and (not-empty date) (or (empty? year) (= year (subs date 0 4)))) (newEvent rowData) nil)))
 
@@ -90,6 +88,6 @@
    wrap-json-response))
 
 (defn -main []
-  (run-jetty app {:port 3000}))
+  (run-jetty app {:port 3388}))
 
-;; (-main)
+(when (= "dev" (env :environment)) (-main))
