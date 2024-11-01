@@ -3,6 +3,7 @@ server
 target
 .lsp
 .cpcache
+.clj-kondo
 
 # Editor
 .calva

@@ -44,11 +44,12 @@
 
 (defn loadCalendarEvents
   "Loads calendar data from the server"
-  [country]
-  (let [cacheKey (str "ics-response-" country), cache (getValue cacheKey)]
-    (if cache cache (let [res (:body (client/get (getCalUrl country) {:insecure? true}))]
-                      (setValue cacheKey res)
-                      res))))
+  [country useCache]
+  (let [cacheKey (str "ics-response" country), cache (getValue cacheKey)]
+    (if (and cache useCache) cache
+        (let [res (:body (client/get (getCalUrl country) {:insecure? true}))]
+          (setValue cacheKey res)
+          res))))
 
 (defn filterEvents
   "Filters out events that are not usable for our purposes (weekends, maybe some other)"
@@ -57,9 +58,9 @@
 
 (defn getEvents
   "Gets holiday events for given year and country"
-  [year country]
+  [year country, checkCache]
   (let [y (str year)]
-    (filterEvents (-> (loadCalendarEvents country)
+    (filterEvents (-> (loadCalendarEvents country (or checkCache true))
                       (parseEventsResponse y)))))
 
 
@@ -73,11 +74,11 @@
              apply
              merge-with (fn [x y] (if (= x y) x (list x y)))))))
 
-(defn handler [{{year "year" country "country"} :params}]
+(defn handler [{{year "year" country "country" cached "cached"} :params}]
   (let [yearVal (or year "")]
     (-> (if (empty? country)
-          (mergeEventLists (getEvents yearVal "fi") (getEvents yearVal "se"))
-          (getEvents yearVal country))
+          (mergeEventLists (getEvents yearVal "fi" cached) (getEvents yearVal "sv" cached))
+          (getEvents yearVal country cached))
         response
         (content-type "json"))))
 
@@ -90,4 +91,7 @@
 (defn -main []
   (run-jetty app {:port (or (env :port) 3388)}))
 
-(when (= "dev" (env :environment)) (-main))
+(defn -testLoadFi [] (print (getEvents "2024" "fi" false)))
+(defn -testLoadSv [] (print (getEvents "2024" "sv" false)))
+(defn -testMerge [] (print (mergeEventLists (getEvents "2024" "fi" false) (getEvents "2024" "sv" false))))
+

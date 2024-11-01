@@ -5,7 +5,7 @@
 (defn eventDateValue
   "Returns event date value from given data"
   [event]
-  (get event "dtstamp"))
+  (get event "dtstart"))
 
 (defn eventNameValue
   "Returns event name value from given data"
@@ -15,7 +15,7 @@
 (defn newEvent
   "Returns a struct from given event data"
   [event]
-  (let [sdfFrom (java.text.SimpleDateFormat. "yyyyMMdd'T'HHmmss'Z'")
+  (let [sdfFrom (java.text.SimpleDateFormat. "yyyyMMdd")
         fromDate (.parse sdfFrom (eventDateValue event))
         sdfDate (java.text.SimpleDateFormat. "yyyy-MM-dd")
         sdfDay (java.text.SimpleDateFormat. "E")]
