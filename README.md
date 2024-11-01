@@ -34,7 +34,7 @@ You will also need to create a bridge network for the containers. Run `docker ne
 
 Then you can just run `docker-compose -f ~/redis/docker-compose.dev.yml up -d`.
 
-Note, redis and holidays api containers must be in the same network
+Note, redis and holidays api containers must be in the same network to make it work without opening any ports.
 
 ## Local development
 
